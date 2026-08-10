@@ -33,5 +33,14 @@ Built with React, Vite, Tailwind CSS, and html-to-image.
    npm run build
    ```
 
+## Deployment (Firebase Hosting)
+
+Since this project is a static React application (Vite), it can be deployed easily to Firebase Hosting.
+
+1. `npm install -g firebase-tools`
+2. `firebase login`
+3. `firebase init` (Select Hosting, set public directory to `dist`, configure as SPA: Yes)
+4. `firebase deploy`
+
 ## Manual Configuration
 Please refer to the `MANUAL.md` file for step-by-step instructions on linking the Inception API key.

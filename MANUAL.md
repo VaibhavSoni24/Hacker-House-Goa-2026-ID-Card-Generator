@@ -26,4 +26,25 @@ To build for production:
 npm run build
 ```
 
-*(Note: The Firebase Storage and Database dependencies were removed from this project to keep the deployment completely free and fully client-side. No Firebase configuration is needed).*
+*(Note: While the app itself is 100% client-side and does not require Firebase Database or Storage, we use Firebase Hosting for deployment).*
+
+### 4. Deployment (Firebase Hosting)
+To deploy this project to Firebase Hosting, follow these steps:
+
+1. Install the Firebase CLI globally if you haven't already:
+   ```bash
+   npm install -g firebase-tools
+   ```
+2. Log in to your Google Account:
+   ```bash
+   firebase login
+   ```
+3. Initialize the project (select **Hosting** and choose your project):
+   ```bash
+   firebase init
+   ```
+   *(When asked for the public directory, type `dist`. Configure as a single-page app: `Yes`.)*
+4. Deploy to the web!
+   ```bash
+   firebase deploy
+   ```
