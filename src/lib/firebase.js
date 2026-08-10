@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,13 +10,12 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-let app, db, storage;
+let app, db;
 
 try {
   if (firebaseConfig.projectId) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    storage = getStorage(app);
   } else {
     console.warn("Firebase config is missing, app is running without Firebase backend connection.");
   }
@@ -25,4 +23,4 @@ try {
   console.error("Firebase initialization error", error);
 }
 
-export { app, db, storage };
+export { app, db };

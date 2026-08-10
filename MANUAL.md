@@ -23,24 +23,6 @@ You need to create a Firebase Project to store the generated ID Cards and Metada
 4. **Enable Firestore Database**:
    - Go to **Firestore Database** in the left menu.
    - Click **Create Database**. Start in **Test Mode** (or configure security rules later).
-5. **Enable Firebase Storage**:
-   - Go to **Storage** in the left menu.
-   - Click **Get Started**. Start in **Test Mode**.
-6. **Update Storage CORS Rules (IMPORTANT)**:
-   - For `html2canvas` to correctly capture images hosted on Firebase without tainting the canvas, you MUST configure CORS on your Firebase Storage bucket.
-   - You can do this using the `gsutil` CLI or Google Cloud Console. 
-   - Create a `cors.json` file locally:
-     ```json
-     [
-       {
-         "origin": ["*"],
-         "method": ["GET"],
-         "maxAgeSeconds": 3600
-       }
-     ]
-     ```
-   - Run: `gsutil cors set cors.json gs://<YOUR_STORAGE_BUCKET_NAME>`
-
 ### 4. Run the Project
 After setting up the `.env` file, run:
 ```bash

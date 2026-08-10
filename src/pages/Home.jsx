@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Download, Share2, Sparkles, RefreshCcw } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { generateTagline } from '../lib/inception';
 import IDCardPreview from '../components/IDCardPreview';
 import FramePreview from '../components/FramePreview';
@@ -76,8 +75,8 @@ export default function Home() {
       const imgData = canvas.toDataURL('image/jpeg', 0.9);
       setGeneratedImg(imgData);
 
-      // If Firebase is configured, upload it
-      if (db && storage) {
+      // If Firebase is configured, save metadata to Firestore
+      if (db) {
         // Create doc first to get ID for QR and verification
         const docRef = await addDoc(collection(db, 'hhgoa_cards'), {
           name,
@@ -90,13 +89,6 @@ export default function Home() {
         const cardId = docRef.id;
         const vUrl = `${window.location.origin}/verify/${cardId}`;
         setVerifiedUrl(vUrl);
-        
-        // Upload image to Storage
-        const imageRef = storageRef(storage, `id_cards/${cardId}.jpg`);
-        await uploadString(imageRef, imgData, 'data_url');
-        const firebaseUrl = await getDownloadURL(imageRef);
-        
-        // We could update the doc with the URL, but not strictly necessary for just sharing
       } else {
         console.warn("Firebase not configured. Image only generated locally.");
         setVerifiedUrl(`${window.location.origin}/#`);
@@ -121,6 +113,7 @@ export default function Home() {
     const text = `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\n${verifiedUrl ? verifiedUrl : 'https://hhgoa.com'}`;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(xUrl, '_blank');
+    alert("Don't forget to attach the ID Card image you just downloaded to your tweet!");
   };
 
   return (
@@ -154,13 +147,13 @@ export default function Home() {
               <div className="flex bg-cream-dim rounded-xl p-1 gap-1">
                 <button 
                   onClick={() => setFormat('frame')}
-                  className={\`flex-1 py-3 text-sm font-bold rounded-lg transition-colors \${format === 'frame' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}\`}
+                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'frame' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
                   PFP Frame
                 </button>
                 <button 
                   onClick={() => setFormat('pass')}
-                  className={\`flex-1 py-3 text-sm font-bold rounded-lg transition-colors \${format === 'pass' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}\`}
+                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'pass' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
                   Boarding Pass
                 </button>
