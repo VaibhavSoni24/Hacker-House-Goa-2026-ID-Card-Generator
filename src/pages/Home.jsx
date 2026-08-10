@@ -192,7 +192,7 @@ export default function Home() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={26}
+                      maxLength={18}
                     />
                   </div>
                   

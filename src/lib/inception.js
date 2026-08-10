@@ -5,9 +5,9 @@ export const generateTagline = async (name, role, interests) => {
     return null;
   }
 
-  const prompt = `Generate a single short and punchy, fun, one-line tagline for an ID card of a participant at a hacker house (Hacker House Goa).
+  const prompt = `Generate a single short, punchy, fun, one-line tagline for a Hacker House Goa ID card.
 Their name is ${name || "a builder"}, role is ${role || "hacker"}, and their interests are: ${interests || "building things"}.
-Keep it under 10 words. Example: 'Fueled by Caffeine, Code, and Good Anime.' Only output the tagline, nothing else. No quotes.`;
+CRITICAL: Keep it STRICTLY under 30 characters total. Example: 'Fueled by Code & Anime.' Only output the tagline, no quotes, no extra text.`;
 
   try {
     const response = await fetch("https://api.inceptionlabs.ai/v1/chat/completions", {
@@ -33,6 +33,10 @@ Keep it under 10 words. Example: 'Fueled by Caffeine, Code, and Good Anime.' Onl
     let tagline = data.choices[0]?.message?.content?.trim();
     if (tagline.startsWith('"') && tagline.endsWith('"')) {
       tagline = tagline.slice(1, -1);
+    }
+    // Force truncation just in case the AI ignores the prompt
+    if (tagline.length > 30) {
+      tagline = tagline.substring(0, 27) + '...';
     }
     return tagline;
   } catch (error) {
