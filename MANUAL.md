@@ -2,33 +2,28 @@
 
 ## Manual Configuration Steps
 
-To make this production-ready application fully functional, you need to configure the backend APIs (Firebase and Inception Labs LLM). 
+To fully configure this application, you only need to provide the API key for the AI Tagline generation feature (powered by Inception Labs).
 
-Follow these steps precisely.
+Follow these steps precisely:
 
 ### 1. Set up Environment Variables
-Rename `.env.example` in the root of the project to `.env` and fill in the values below.
+Rename `.env.example` in the root of the project to `.env`.
 
 ### 2. Inception Labs API (for AI Taglines)
-
+Add your Inception API key to your `.env` file like this:
 ```
-Paste it into your `.env` file.
+VITE_INCEPTION_API_KEY=sk_4ccc94e7c20af22d4af3757348e0ce8e
+```
 
-### 3. Firebase Configuration (for Database & Image Storage)
-
-You need to create a Firebase Project to store the generated ID Cards and Metadata.
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and click **Add Project**. Name it `hhgoa-id-generator`.
-2. Once created, click on the **Web** icon (</>) to add a web app to the project. Register the app.
-3. Firebase will provide a `firebaseConfig` object. Copy the values into your `.env` file corresponding to the `VITE_FIREBASE_*` variables.
-4. **Enable Firestore Database**:
-   - Go to **Firestore Database** in the left menu.
-   - Click **Create Database**. Start in **Test Mode** (or configure security rules later).
-### 4. Run the Project
-After setting up the `.env` file, run:
+### 3. Run the Project
+After setting up the `.env` file, start the development server:
 ```bash
 npm run dev
 ```
+
 To build for production:
 ```bash
 npm run build
 ```
+
+*(Note: The Firebase Storage and Database dependencies were removed from this project to keep the deployment completely free and fully client-side. No Firebase configuration is needed).*
