@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Download, Share2, Sparkles, RefreshCcw } from 'lucide-react';
+import { Camera, Download, Share2, Sparkles, RefreshCcw, Users } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { generateTagline } from '../lib/inception';
 import IDCardPreview from '../components/IDCardPreview';
 import FramePreview from '../components/FramePreview';
+import TeamCardPreview from '../components/TeamCardPreview';
 
 const GATES = ["A", "B", "C", "D", "E", "F"];
 const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const generateId = () => 'HHG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
 export default function Home() {
-  const [format, setFormat] = useState('pass'); // 'frame' | 'pass'
+  const [format, setFormat] = useState('pass'); // 'frame' | 'pass' | 'team'
   const [photoUrl, setPhotoUrl] = useState(null);
 
   // Pass fields
@@ -21,6 +22,11 @@ export default function Home() {
   const [gate, setGate] = useState('A12');
   const [seat, setSeat] = useState('4B');
   const [uniqueId, setUniqueId] = useState('');
+
+  // Team Card fields
+  const [teamName, setTeamName] = useState('');
+  const [memberCount, setMemberCount] = useState(3);
+  const [teamPhotos, setTeamPhotos] = useState([null, null, null]);
 
   // App state
   const [loadingTitle, setLoadingTitle] = useState(false);
@@ -39,7 +45,7 @@ export default function Home() {
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        // The card is 800px wide. 
+        // The cards are max 800px wide. 
         const availableWidth = entry.contentRect.width;
         setScale(Math.min(1, availableWidth / 820)); // 820 to give a tiny bit of breathing room
       }
@@ -57,11 +63,23 @@ export default function Home() {
     setUniqueId(generateId());
   };
 
-  const handlePhotoUpload = (e) => {
+  const handleSinglePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoUrl(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleTeamPhotoUpload = (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const newPhotos = [...teamPhotos];
+      newPhotos[index] = ev.target.result;
+      setTeamPhotos(newPhotos);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -79,12 +97,10 @@ export default function Home() {
   const captureImage = async () => {
     if (!previewRef.current) return null;
 
-    // For Boarding pass, we want transparent background outside the card.
-    // For Frame, it's a solid square.
     return await toPng(previewRef.current, {
       pixelRatio: 2,
       cacheBust: true,
-      backgroundColor: format === 'pass' ? 'transparent' : null,
+      backgroundColor: format === 'frame' ? null : 'transparent',
       style: {
         transform: 'scale(1)', // Ensure it captures at unscaled size
         transformOrigin: 'top left',
@@ -93,14 +109,25 @@ export default function Home() {
   };
 
   const handleDownload = async () => {
-    if (!photoUrl) return;
+    // Validation
+    if (format !== 'team' && !photoUrl) return;
+    if (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) return;
+
     setGenerating(true);
     try {
       const dataUrl = await captureImage();
       if (!dataUrl) throw new Error("Failed to capture");
 
       const link = document.createElement('a');
-      link.download = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.png`;
+      let filename = `HHGoa26_${format}_Builder.png`;
+      
+      if (format === 'team') {
+        filename = `HHGoa26_Team_${teamName.replace(/\s+/g, '_') || 'Squad'}.png`;
+      } else {
+        filename = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.png`;
+      }
+      
+      link.download = filename;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -112,12 +139,16 @@ export default function Home() {
   };
 
   const handleShareX = async () => {
-    if (!photoUrl) return;
+    if (format !== 'team' && !photoUrl) return;
+    if (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) return;
 
     // Optionally trigger download first so they have it ready to attach
     await handleDownload();
 
-    const text = `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`;
+    const text = format === 'team' 
+      ? `Our squad ${teamName ? `"${teamName}"` : ''} is ready for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`
+      : `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`;
+      
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 
     // Small delay to allow the download prompt to appear first
@@ -158,102 +189,163 @@ export default function Home() {
               <div className="flex bg-cream-dim rounded-xl p-1 gap-1">
                 <button
                   onClick={() => setFormat('frame')}
-                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'frame' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
+                  className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${format === 'frame' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
                   PFP Frame
                 </button>
                 <button
                   onClick={() => setFormat('pass')}
-                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'pass' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
+                  className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${format === 'pass' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
                   Boarding Pass
                 </button>
+                <button
+                  onClick={() => setFormat('team')}
+                  className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-colors ${format === 'team' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
+                >
+                  Team Card
+                </button>
               </div>
 
-              {/* Photo Upload */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-forest uppercase tracking-widest">Your Photo</label>
-                <label className="border-2 border-dashed border-forest/30 hover:border-forest/60 hover:bg-gold-soft/30 transition-colors rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer text-center group">
-                  <Camera className="w-8 h-8 text-forest mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-semibold text-forest">Tap to upload a photo</span>
-                  <span className="text-xs text-forest/60 mt-1">JPG, PNG, HEIC</span>
-                  <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                </label>
-              </div>
-
-              {/* Boarding Pass Fields */}
-              {format === 'pass' && (
+              {/* Dynamic Form Sections */}
+              {format === 'team' ? (
+                // TEAM CARD FIELDS
                 <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Name</label>
+                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Team Name</label>
                     <input
                       type="text"
-                      placeholder="e.g. Vaibhav Soni"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. The Alchemists"
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={8}
+                      maxLength={30}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Stack / Role</label>
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink cursor-pointer"
-                    >
-                      <option>Full-Stack</option>
-                      <option>Frontend</option>
-                      <option>Backend</option>
-                      <option>AI / ML</option>
-                      <option>Web3 / Blockchain</option>
-                      <option>Design</option>
-                      <option>Product</option>
-                      <option>Mobile</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
                     <label className="text-xs font-bold text-forest uppercase tracking-widest flex items-center justify-between">
-                      Interests (For AI Tagline)
+                      Number of Members
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. Anime, Gaming, Web3"
-                        value={interests}
-                        onChange={(e) => setInterests(e.target.value)}
-                        className="flex-1 px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      />
-                      <button
-                        onClick={handleGenerateTitle}
-                        disabled={loadingTitle}
-                        className="bg-forest text-gold px-4 rounded-xl hover:bg-forest-deep transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
-                        title="Generate AI Tagline"
-                      >
-                        {loadingTitle ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                      </button>
+                    <div className="flex bg-cream-dim rounded-xl p-1 gap-1">
+                      {[1, 2, 3].map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => setMemberCount(num)}
+                          className={`flex-1 py-2 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 ${memberCount === num ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest hover:bg-forest/5'}`}
+                        >
+                          <Users className="w-4 h-4" /> {num}
+                        </button>
+                      ))}
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-forest uppercase tracking-widest flex items-center justify-between">
-                      Builder Title
-                      <button onClick={rerollFlight} title="Reroll ID & Flight" className="text-forest hover:text-forest-deep">
-                        <RefreshCcw className="w-3 h-3" />
-                      </button>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. CHIEF VIBE SHIPPER"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={40}
-                    />
+                  
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Member Photos</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[...Array(memberCount)].map((_, i) => (
+                        <label key={i} className="aspect-[3/4] border-2 border-dashed border-forest/30 hover:border-forest/60 hover:bg-gold-soft/30 transition-colors rounded-xl flex flex-col items-center justify-center cursor-pointer text-center group relative overflow-hidden">
+                          {teamPhotos[i] ? (
+                            <img src={teamPhotos[i]} alt={`Member ${i+1}`} className="absolute inset-0 w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <Camera className="w-6 h-6 text-forest/60 mb-1 group-hover:scale-110 transition-transform" />
+                              <span className="text-[10px] font-semibold text-forest/60">Photo {i+1}</span>
+                            </>
+                          )}
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleTeamPhotoUpload(e, i)} />
+                        </label>
+                      ))}
+                    </div>
                   </div>
+                </div>
+              ) : (
+                // PASS / FRAME FIELDS
+                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Your Photo</label>
+                    <label className="border-2 border-dashed border-forest/30 hover:border-forest/60 hover:bg-gold-soft/30 transition-colors rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer text-center group">
+                      <Camera className="w-8 h-8 text-forest mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-semibold text-forest">Tap to upload a photo</span>
+                      <span className="text-xs text-forest/60 mt-1">JPG, PNG, HEIC</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleSinglePhotoUpload} />
+                    </label>
+                  </div>
+
+                  {format === 'pass' && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-forest uppercase tracking-widest">Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Vaibhav Soni"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
+                          maxLength={8}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-forest uppercase tracking-widest">Stack / Role</label>
+                        <select
+                          value={role}
+                          onChange={(e) => setRole(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink cursor-pointer"
+                        >
+                          <option>Full-Stack</option>
+                          <option>Frontend</option>
+                          <option>Backend</option>
+                          <option>AI / ML</option>
+                          <option>Web3 / Blockchain</option>
+                          <option>Design</option>
+                          <option>Product</option>
+                          <option>Mobile</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-forest uppercase tracking-widest flex items-center justify-between">
+                          Interests (For AI Tagline)
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="e.g. Anime, Gaming, Web3"
+                            value={interests}
+                            onChange={(e) => setInterests(e.target.value)}
+                            className="flex-1 px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
+                          />
+                          <button
+                            onClick={handleGenerateTitle}
+                            disabled={loadingTitle}
+                            className="bg-forest text-gold px-4 rounded-xl hover:bg-forest-deep transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
+                            title="Generate AI Tagline"
+                          >
+                            {loadingTitle ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-forest uppercase tracking-widest flex items-center justify-between">
+                          Builder Title
+                          <button onClick={rerollFlight} title="Reroll ID & Flight" className="text-forest hover:text-forest-deep">
+                            <RefreshCcw className="w-3 h-3" />
+                          </button>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. CHIEF VIBE SHIPPER"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
+                          maxLength={40}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -261,7 +353,11 @@ export default function Home() {
               <div className="pt-4 space-y-3">
                 <button
                   onClick={handleDownload}
-                  disabled={!photoUrl || generating}
+                  disabled={
+                    (format !== 'team' && !photoUrl) || 
+                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) || 
+                    generating
+                  }
                   className="w-full py-4 rounded-xl font-bold text-forest-deep bg-gold hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
                 >
                   {generating ? (
@@ -273,7 +369,11 @@ export default function Home() {
 
                 <button
                   onClick={handleShareX}
-                  disabled={!photoUrl || generating}
+                  disabled={
+                    (format !== 'team' && !photoUrl) || 
+                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) || 
+                    generating
+                  }
                   className="w-full py-4 rounded-xl font-bold text-cream bg-ink hover:bg-black transition-colors flex items-center justify-center gap-2 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Share2 className="w-5 h-5" /> Share to X
@@ -290,11 +390,10 @@ export default function Home() {
           <div ref={stageRef} className="stage-bg rounded-3xl p-8 lg:p-12 flex items-center justify-center min-h-[500px] overflow-hidden shadow-2xl relative">
             <div
               style={{ transform: `scale(${scale})` }}
-              className="transition-transform origin-center"
+              className="transition-transform origin-center flex items-center justify-center"
             >
-              {format === 'frame' ? (
-                <FramePreview ref={previewRef} photoUrl={photoUrl} />
-              ) : (
+              {format === 'frame' && <FramePreview ref={previewRef} photoUrl={photoUrl} />}
+              {format === 'pass' && (
                 <IDCardPreview
                   ref={previewRef}
                   photoUrl={photoUrl}
@@ -304,6 +403,13 @@ export default function Home() {
                   gate={gate}
                   seat={seat}
                   uniqueId={uniqueId}
+                />
+              )}
+              {format === 'team' && (
+                <TeamCardPreview 
+                  ref={previewRef}
+                  teamName={teamName}
+                  teamPhotos={teamPhotos.slice(0, memberCount)}
                 />
               )}
             </div>
