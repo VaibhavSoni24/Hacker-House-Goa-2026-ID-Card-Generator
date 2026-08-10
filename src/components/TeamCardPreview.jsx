@@ -5,10 +5,10 @@ const TeamCardPreview = forwardRef(({ teamName, teamPhotos = [] }, ref) => {
   const photos = teamPhotos.length > 0 ? teamPhotos : [null];
 
   return (
-    <div className="relative w-[800px] h-[450px] flex items-center justify-center p-5 font-body">
+    <div className="relative w-[800px] h-[520px] flex items-center justify-center p-5 font-body">
       <div 
         ref={ref}
-        className="w-[760px] h-[410px] bg-cream rounded-3xl overflow-hidden flex flex-col relative shadow-2xl border-4 border-forest/20"
+        className="w-[760px] h-[480px] bg-cream rounded-3xl overflow-hidden flex flex-col relative shadow-2xl border-4 border-forest/20"
         style={{ transformOrigin: 'top left' }}
       >
         {/* Subtle Grid Background */}
