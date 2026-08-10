@@ -120,13 +120,13 @@ export default function Home() {
 
       const link = document.createElement('a');
       let filename = `HHGoa26_${format}_Builder.png`;
-      
+
       if (format === 'team') {
         filename = `HHGoa26_Team_${teamName.replace(/\s+/g, '_') || 'Squad'}.png`;
       } else {
         filename = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.png`;
       }
-      
+
       link.download = filename;
       link.href = dataUrl;
       link.click();
@@ -145,10 +145,10 @@ export default function Home() {
     // Optionally trigger download first so they have it ready to attach
     await handleDownload();
 
-    const text = format === 'team' 
+    const text = format === 'team'
       ? `Our squad ${teamName ? `"${teamName}"` : ''} is ready for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`
       : `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`;
-      
+
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 
     // Small delay to allow the download prompt to appear first
@@ -219,7 +219,7 @@ export default function Home() {
                       value={teamName}
                       onChange={(e) => setTeamName(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={30}
+                      maxLength={13}
                     />
                   </div>
 
@@ -239,18 +239,18 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <label className="text-xs font-bold text-forest uppercase tracking-widest">Member Photos</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[...Array(memberCount)].map((_, i) => (
                         <label key={i} className="aspect-[3/4] border-2 border-dashed border-forest/30 hover:border-forest/60 hover:bg-gold-soft/30 transition-colors rounded-xl flex flex-col items-center justify-center cursor-pointer text-center group relative overflow-hidden">
                           {teamPhotos[i] ? (
-                            <img src={teamPhotos[i]} alt={`Member ${i+1}`} className="absolute inset-0 w-full h-full object-cover" />
+                            <img src={teamPhotos[i]} alt={`Member ${i + 1}`} className="absolute inset-0 w-full h-full object-cover" />
                           ) : (
                             <>
                               <Camera className="w-6 h-6 text-forest/60 mb-1 group-hover:scale-110 transition-transform" />
-                              <span className="text-[10px] font-semibold text-forest/60">Photo {i+1}</span>
+                              <span className="text-[10px] font-semibold text-forest/60">Photo {i + 1}</span>
                             </>
                           )}
                           <input type="file" className="hidden" accept="image/*" onChange={(e) => handleTeamPhotoUpload(e, i)} />
@@ -354,8 +354,8 @@ export default function Home() {
                 <button
                   onClick={handleDownload}
                   disabled={
-                    (format !== 'team' && !photoUrl) || 
-                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) || 
+                    (format !== 'team' && !photoUrl) ||
+                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) ||
                     generating
                   }
                   className="w-full py-4 rounded-xl font-bold text-forest-deep bg-gold hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
@@ -370,8 +370,8 @@ export default function Home() {
                 <button
                   onClick={handleShareX}
                   disabled={
-                    (format !== 'team' && !photoUrl) || 
-                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) || 
+                    (format !== 'team' && !photoUrl) ||
+                    (format === 'team' && teamPhotos.slice(0, memberCount).every(p => p === null)) ||
                     generating
                   }
                   className="w-full py-4 rounded-xl font-bold text-cream bg-ink hover:bg-black transition-colors flex items-center justify-center gap-2 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
@@ -406,7 +406,7 @@ export default function Home() {
                 />
               )}
               {format === 'team' && (
-                <TeamCardPreview 
+                <TeamCardPreview
                   ref={previewRef}
                   teamName={teamName}
                   teamPhotos={teamPhotos.slice(0, memberCount)}
