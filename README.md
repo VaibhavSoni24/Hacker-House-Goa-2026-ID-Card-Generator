@@ -1,16 +1,17 @@
 # Hacker House Goa 2026 - ID Card & Frame Generator
 
-A production-grade, highly interactive, and premium web application for generating Hacker House Goa 2026 PFP Frames and Builder ID Cards. 
+A production-grade, highly interactive, and premium web application for generating Hacker House Goa 2026 PFP Frames, Builder ID Cards, and Team Squad Cards. 
 
-Built with React, Vite, Tailwind CSS, and html-to-image.
+Built with React, Vite, Tailwind CSS, and `html-to-image`.
 
 ## Features
 - **Format A (PFP Frame)**: Generate a unique Hacker House Goa profile picture frame.
-- **Format B (Builder ID Card)**: Generate a unique, premium boarding pass ID card.
-- **AI Taglines**: Uses Inception Labs API to generate a fun, punchy tagline based on your interests.
-- **Live Preview**: See your ID card generated in real-time.
-- **Share to X**: One-click sharing to X with pre-filled captions.
-- **100% Client-Side**: Fully processes and generates images on the device without requiring any paid cloud storage backend.
+- **Format B (Builder ID Card)**: Generate a unique, premium boarding pass ID card with dynamic flight details and role configurations.
+- **Format C (Team Card)**: A fully responsive, landscape Team Card supporting 1 to 3 members with a premium cyberpunk/hacker aesthetic (crosshairs, custom barcodes, grid layouts).
+- **AI Taglines**: Uses the Inception Labs API to dynamically generate a fun, punchy tagline based on your interests. Built-in failsafes ensure layout stability.
+- **Flawless Export & Scaling**: Uses custom CSS scaling via `ResizeObserver` to ensure perfect responsiveness on mobile without breaking the un-cropped `html-to-image` full-resolution PNG export.
+- **Share to X**: One-click sharing to X with pre-filled, format-aware captions.
+- **100% Client-Side Image Generation**: Fully processes and generates images on the device without requiring any paid cloud storage backend.
 
 ## Setup Instructions
 
@@ -37,10 +38,10 @@ Built with React, Vite, Tailwind CSS, and html-to-image.
 
 Since this project is a static React application (Vite), it can be deployed easily to Firebase Hosting.
 
-1. `npm install -g firebase-tools`
-2. `firebase login`
-3. `firebase init` (Select Hosting, set public directory to `dist`, configure as SPA: Yes)
-4. `firebase deploy`
+1. Install the CLI: `npm install -g firebase-tools`
+2. Authenticate: `firebase login`
+3. Initialize (if not already done): `firebase init` (Select Hosting, set public directory to `dist`, configure as SPA: Yes)
+4. Deploy to production: `firebase deploy`
 
 ## Manual Configuration
-Please refer to the `MANUAL.md` file for step-by-step instructions on linking the Inception API key.
+Please refer to the `MANUAL.md` file for step-by-step instructions on linking the Inception API key and setting up the project locally.
