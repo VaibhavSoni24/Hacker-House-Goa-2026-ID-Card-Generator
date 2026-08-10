@@ -10,13 +10,12 @@ Follow these steps precisely.
 Rename `.env.example` in the root of the project to `.env` and fill in the values below.
 
 ### 2. Inception Labs API (for AI Taglines)
-The user has provided this key already:
+
 ```
-VITE_INCEPTION_API_KEY=sk_4ccc94e7c20af22d4af3757348e0ce8e
-```
-Paste this into your `.env` file.
+Paste it into your `.env` file.
 
 ### 3. Firebase Configuration (for Database & Image Storage)
+
 You need to create a Firebase Project to store the generated ID Cards and Metadata.
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and click **Add Project**. Name it `hhgoa-id-generator`.
 2. Once created, click on the **Web** icon (</>) to add a web app to the project. Register the app.
