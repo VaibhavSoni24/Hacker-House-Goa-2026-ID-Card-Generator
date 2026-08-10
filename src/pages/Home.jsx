@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Download, Share2, Sparkles, RefreshCcw } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { toPng } from 'html-to-image';
 import { generateTagline } from '../lib/inception';
 import IDCardPreview from '../components/IDCardPreview';
 import FramePreview from '../components/FramePreview';
 
 const GATES = ["A","B","C","D","E","F"];
 const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const generateId = () => 'HHG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
 export default function Home() {
   const [format, setFormat] = useState('pass'); // 'frame' | 'pass'
@@ -21,12 +20,11 @@ export default function Home() {
   const [title, setTitle] = useState('');
   const [gate, setGate] = useState('A12');
   const [seat, setSeat] = useState('4B');
+  const [uniqueId, setUniqueId] = useState('');
   
   // App state
   const [loadingTitle, setLoadingTitle] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [generatedImg, setGeneratedImg] = useState(null);
-  const [verifiedUrl, setVerifiedUrl] = useState(null);
   
   const previewRef = useRef(null);
 
@@ -39,6 +37,7 @@ export default function Home() {
     const row = String(1 + Math.floor(Math.random()*42));
     setSeat(row + randomFrom(["A","B","C","D","E","F"]));
     setGate(randomFrom(GATES) + (1 + Math.floor(Math.random()*24)));
+    setUniqueId(generateId());
   };
 
   const handlePhotoUpload = (e) => {
@@ -60,60 +59,55 @@ export default function Home() {
     setLoadingTitle(false);
   };
 
-  const handleGenerateAndSave = async () => {
-    if (!previewRef.current) return;
-    setGenerating(true);
+  const captureImage = async () => {
+    if (!previewRef.current) return null;
     
-    try {
-      // 1. Capture DOM as Canvas
-      const canvas = await html2canvas(previewRef.current, {
-        useCORS: true,
-        scale: 2, // Higher quality
-        backgroundColor: null,
-      });
-      
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
-      setGeneratedImg(imgData);
-
-      // If Firebase is configured, save metadata to Firestore
-      if (db) {
-        // Create doc first to get ID for QR and verification
-        const docRef = await addDoc(collection(db, 'hhgoa_cards'), {
-          name,
-          role,
-          title,
-          format,
-          timestamp: serverTimestamp(),
-        });
-        
-        const cardId = docRef.id;
-        const vUrl = `${window.location.origin}/verify/${cardId}`;
-        setVerifiedUrl(vUrl);
-      } else {
-        console.warn("Firebase not configured. Image only generated locally.");
-        setVerifiedUrl(`${window.location.origin}/#`);
+    // For Boarding pass, we want transparent background outside the card.
+    // For Frame, it's a solid square.
+    return await toPng(previewRef.current, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: format === 'pass' ? 'transparent' : null,
+      style: {
+        transform: 'scale(1)', // Ensure it captures at unscaled size
+        transformOrigin: 'top left',
       }
-    } catch (error) {
-      console.error("Error generating image:", error);
-      alert("Failed to generate image. Please try again.");
+    });
+  };
+
+  const handleDownload = async () => {
+    if (!photoUrl) return;
+    setGenerating(true);
+    try {
+      const dataUrl = await captureImage();
+      if (!dataUrl) throw new Error("Failed to capture");
+      
+      const link = document.createElement('a');
+      link.download = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download image. Try using a different photo format.");
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleDownload = () => {
-    if (!generatedImg) return;
-    const link = document.createElement('a');
-    link.download = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.jpg`;
-    link.href = generatedImg;
-    link.click();
-  };
-
-  const handleShareX = () => {
-    const text = `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\n${verifiedUrl ? verifiedUrl : 'https://hhgoa.com'}`;
+  const handleShareX = async () => {
+    if (!photoUrl) return;
+    
+    // Optionally trigger download first so they have it ready to attach
+    await handleDownload();
+    
+    const text = `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(xUrl, '_blank');
-    alert("Don't forget to attach the ID Card image you just downloaded to your tweet!");
+    
+    // Small delay to allow the download prompt to appear first
+    setTimeout(() => {
+      window.open(xUrl, '_blank');
+      alert("Don't forget to attach the ID Card image you just downloaded to your tweet!");
+    }, 500);
   };
 
   return (
@@ -228,7 +222,12 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-forest uppercase tracking-widest">Builder Title</label>
+                    <label className="text-xs font-bold text-forest uppercase tracking-widest flex items-center justify-between">
+                      Builder Title
+                      <button onClick={rerollFlight} title="Reroll ID & Flight" className="text-forest hover:text-forest-deep">
+                        <RefreshCcw className="w-3 h-3" />
+                      </button>
+                    </label>
                     <input 
                       type="text" 
                       placeholder="e.g. CHIEF VIBE SHIPPER"
@@ -244,37 +243,28 @@ export default function Home() {
               {/* Actions */}
               <div className="pt-4 space-y-3">
                 <button 
-                  onClick={handleGenerateAndSave}
+                  onClick={handleDownload}
                   disabled={!photoUrl || generating}
                   className="w-full py-4 rounded-xl font-bold text-forest-deep bg-gold hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
                 >
                   {generating ? (
-                    <><RefreshCcw className="w-5 h-5 animate-spin" /> Generating...</>
+                    <><RefreshCcw className="w-5 h-5 animate-spin" /> Preparing Image...</>
                   ) : (
-                    'Generate & Save'
+                    <><Download className="w-5 h-5" /> Download Image</>
                   )}
                 </button>
                 
-                {generatedImg && (
-                  <div className="flex gap-3 animate-in fade-in zoom-in duration-300">
-                    <button 
-                      onClick={handleDownload}
-                      className="flex-1 py-3 rounded-xl font-bold text-cream bg-forest hover:bg-forest-deep transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download className="w-4 h-4" /> Download
-                    </button>
-                    <button 
-                      onClick={handleShareX}
-                      className="flex-1 py-3 rounded-xl font-bold text-cream bg-ink hover:bg-black transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Share2 className="w-4 h-4" /> Share to X
-                    </button>
-                  </div>
-                )}
+                <button 
+                  onClick={handleShareX}
+                  disabled={!photoUrl || generating}
+                  className="w-full py-4 rounded-xl font-bold text-cream bg-ink hover:bg-black transition-colors flex items-center justify-center gap-2 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Share2 className="w-5 h-5" /> Share to X
+                </button>
               </div>
               
               <p className="text-xs text-forest/60 text-center mt-4">
-                Images are saved to the HH Goa registry. By generating, you agree to our terms.
+                Images are generated completely locally in your browser.
               </p>
             </div>
           </div>
@@ -291,9 +281,9 @@ export default function Home() {
                   name={name} 
                   role={role} 
                   title={title}
-                  id="preview"
                   gate={gate}
                   seat={seat}
+                  uniqueId={uniqueId}
                 />
               )}
             </div>
