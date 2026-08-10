@@ -25,12 +25,29 @@ export default function Home() {
   // App state
   const [loadingTitle, setLoadingTitle] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [scale, setScale] = useState(1);
   
   const previewRef = useRef(null);
+  const stageRef = useRef(null);
 
   // Initialize random flight details
   useEffect(() => {
     rerollFlight();
+  }, []);
+
+  // Responsive scaling for the preview stage
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        // The card is 800px wide. 
+        const availableWidth = entry.contentRect.width;
+        setScale(Math.min(1, availableWidth / 820)); // 820 to give a tiny bit of breathing room
+      }
+    });
+    if (stageRef.current) {
+      observer.observe(stageRef.current);
+    }
+    return () => observer.disconnect();
   }, []);
 
   const rerollFlight = () => {
@@ -270,8 +287,11 @@ export default function Home() {
           </div>
 
           {/* Stage Area */}
-          <div className="stage-bg rounded-3xl p-8 lg:p-12 flex items-center justify-center min-h-[500px] overflow-hidden shadow-2xl relative">
-            <div className="scale-75 md:scale-90 xl:scale-100 transition-transform origin-center">
+          <div ref={stageRef} className="stage-bg rounded-3xl p-8 lg:p-12 flex items-center justify-center min-h-[500px] overflow-hidden shadow-2xl relative">
+            <div 
+              style={{ transform: `scale(${scale})` }} 
+              className="transition-transform origin-center"
+            >
               {format === 'frame' ? (
                 <FramePreview ref={previewRef} photoUrl={photoUrl} />
               ) : (
