@@ -5,14 +5,14 @@ import { generateTagline } from '../lib/inception';
 import IDCardPreview from '../components/IDCardPreview';
 import FramePreview from '../components/FramePreview';
 
-const GATES = ["A","B","C","D","E","F"];
+const GATES = ["A", "B", "C", "D", "E", "F"];
 const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const generateId = () => 'HHG-' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
 export default function Home() {
   const [format, setFormat] = useState('pass'); // 'frame' | 'pass'
   const [photoUrl, setPhotoUrl] = useState(null);
-  
+
   // Pass fields
   const [name, setName] = useState('');
   const [role, setRole] = useState('Full-Stack');
@@ -21,12 +21,12 @@ export default function Home() {
   const [gate, setGate] = useState('A12');
   const [seat, setSeat] = useState('4B');
   const [uniqueId, setUniqueId] = useState('');
-  
+
   // App state
   const [loadingTitle, setLoadingTitle] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [scale, setScale] = useState(1);
-  
+
   const previewRef = useRef(null);
   const stageRef = useRef(null);
 
@@ -51,9 +51,9 @@ export default function Home() {
   }, []);
 
   const rerollFlight = () => {
-    const row = String(1 + Math.floor(Math.random()*42));
-    setSeat(row + randomFrom(["A","B","C","D","E","F"]));
-    setGate(randomFrom(GATES) + (1 + Math.floor(Math.random()*24)));
+    const row = String(1 + Math.floor(Math.random() * 42));
+    setSeat(row + randomFrom(["A", "B", "C", "D", "E", "F"]));
+    setGate(randomFrom(GATES) + (1 + Math.floor(Math.random() * 24)));
     setUniqueId(generateId());
   };
 
@@ -78,7 +78,7 @@ export default function Home() {
 
   const captureImage = async () => {
     if (!previewRef.current) return null;
-    
+
     // For Boarding pass, we want transparent background outside the card.
     // For Frame, it's a solid square.
     return await toPng(previewRef.current, {
@@ -98,7 +98,7 @@ export default function Home() {
     try {
       const dataUrl = await captureImage();
       if (!dataUrl) throw new Error("Failed to capture");
-      
+
       const link = document.createElement('a');
       link.download = `HHGoa26_${format}_${name.replace(/\s+/g, '_') || 'Builder'}.png`;
       link.href = dataUrl;
@@ -113,13 +113,13 @@ export default function Home() {
 
   const handleShareX = async () => {
     if (!photoUrl) return;
-    
+
     // Optionally trigger download first so they have it ready to attach
     await handleDownload();
-    
+
     const text = `Got my Boarding Pass for Hacker House Goa 2026! 🌴\n\nSee you on the beach. #FrameInGoa\n\nhttps://hhgoa.com`;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    
+
     // Small delay to allow the download prompt to appear first
     setTimeout(() => {
       window.open(xUrl, '_blank');
@@ -130,7 +130,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-forest-deep text-cream py-10 px-4">
       <div className="max-w-7xl mx-auto space-y-10">
-        
+
         {/* Header */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-line pb-6">
           <div className="flex items-center gap-4">
@@ -148,21 +148,21 @@ export default function Home() {
         </header>
 
         <main className="grid lg:grid-cols-[400px_1fr] gap-10 items-start">
-          
+
           {/* Controls Panel */}
           <div className="bg-cream text-ink rounded-3xl overflow-hidden shadow-2xl relative">
             <div className="ticket-perf w-full"></div>
             <div className="p-6 space-y-6">
-              
+
               {/* Tabs */}
               <div className="flex bg-cream-dim rounded-xl p-1 gap-1">
-                <button 
+                <button
                   onClick={() => setFormat('frame')}
                   className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'frame' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
                   PFP Frame
                 </button>
-                <button 
+                <button
                   onClick={() => setFormat('pass')}
                   className={`flex-1 py-3 text-sm font-bold rounded-lg transition-colors ${format === 'pass' ? 'bg-forest text-cream shadow-md' : 'text-forest/60 hover:text-forest'}`}
                 >
@@ -186,19 +186,19 @@ export default function Home() {
                 <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-forest uppercase tracking-widest">Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="e.g. Vaibhav Soni"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={18}
+                      maxLength={8}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-forest uppercase tracking-widest">Stack / Role</label>
-                    <select 
+                    <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink cursor-pointer"
@@ -220,14 +220,14 @@ export default function Home() {
                       Interests (For AI Tagline)
                     </label>
                     <div className="flex gap-2">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="e.g. Anime, Gaming, Web3"
                         value={interests}
                         onChange={(e) => setInterests(e.target.value)}
                         className="flex-1 px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
                       />
-                      <button 
+                      <button
                         onClick={handleGenerateTitle}
                         disabled={loadingTitle}
                         className="bg-forest text-gold px-4 rounded-xl hover:bg-forest-deep transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
@@ -245,13 +245,13 @@ export default function Home() {
                         <RefreshCcw className="w-3 h-3" />
                       </button>
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="e.g. CHIEF VIBE SHIPPER"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border-2 border-cream-dim focus:border-forest outline-none bg-white font-semibold text-ink"
-                      maxLength={30}
+                      maxLength={40}
                     />
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export default function Home() {
 
               {/* Actions */}
               <div className="pt-4 space-y-3">
-                <button 
+                <button
                   onClick={handleDownload}
                   disabled={!photoUrl || generating}
                   className="w-full py-4 rounded-xl font-bold text-forest-deep bg-gold hover:bg-gold-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg shadow-lg"
@@ -270,8 +270,8 @@ export default function Home() {
                     <><Download className="w-5 h-5" /> Download Image</>
                   )}
                 </button>
-                
-                <button 
+
+                <button
                   onClick={handleShareX}
                   disabled={!photoUrl || generating}
                   className="w-full py-4 rounded-xl font-bold text-cream bg-ink hover:bg-black transition-colors flex items-center justify-center gap-2 text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
@@ -279,7 +279,7 @@ export default function Home() {
                   <Share2 className="w-5 h-5" /> Share to X
                 </button>
               </div>
-              
+
               <p className="text-xs text-forest/60 text-center mt-4">
                 Images are generated completely locally in your browser.
               </p>
@@ -288,18 +288,18 @@ export default function Home() {
 
           {/* Stage Area */}
           <div ref={stageRef} className="stage-bg rounded-3xl p-8 lg:p-12 flex items-center justify-center min-h-[500px] overflow-hidden shadow-2xl relative">
-            <div 
-              style={{ transform: `scale(${scale})` }} 
+            <div
+              style={{ transform: `scale(${scale})` }}
               className="transition-transform origin-center"
             >
               {format === 'frame' ? (
                 <FramePreview ref={previewRef} photoUrl={photoUrl} />
               ) : (
-                <IDCardPreview 
-                  ref={previewRef} 
-                  photoUrl={photoUrl} 
-                  name={name} 
-                  role={role} 
+                <IDCardPreview
+                  ref={previewRef}
+                  photoUrl={photoUrl}
+                  name={name}
+                  role={role}
                   title={title}
                   gate={gate}
                   seat={seat}
